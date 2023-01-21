@@ -53,21 +53,20 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
 
 router.get("/", async function (req, res, next) {
   try {
-    // get filters from query string; they could have values or be undefined
-    let { minEmployees, maxEmployees, nameLike } = req.query;
     // if min and/or max are defined, they are Strings and I want them as Numbers
-    if (minEmployees) minEmployees = Number(minEmployees);
-    if (maxEmployees) maxEmployees = Number(maxEmployees);
+    if (req.query.minEmployees) req.query.minEmployees = Number(req.query.minEmployees);
+    if (req.query.maxEmployees) req.query.maxEmployees = Number(req.query.maxEmployees);
 
-    // validate against schema to confirm min/max are integers >= 0 and nameLike is a string
-    const reqQuery = { minEmployees, maxEmployees, nameLike };
-    const validator = jsonschema.validate(reqQuery, companySearchSchema);
+    // validate against schema to confirm min/max are integers >= 0, nameLike is a string, and no other filters included
+    const validator = jsonschema.validate(req.query, companySearchSchema);
     if (!validator.valid) {
       const errs = validator.errors.map(e => e.stack);
       throw new BadRequestError(errs);
     }
 
-    // right off the bat, throw an error if user screws up the min and max numbers
+    const { minEmployees, maxEmployees, nameLike } = req.query;
+
+    // validate min is not > max (jsonschema couldn't handle that)
     if (minEmployees > maxEmployees) throw new BadRequestError("Min cannot be greater than max");
 
     // filters starts off as empty object that the following if statements may or may not fill in
