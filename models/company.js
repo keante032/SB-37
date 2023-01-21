@@ -58,7 +58,47 @@ class Company {
                   logo_url AS "logoUrl"
            FROM companies
            ORDER BY name`);
-    return companiesRes.rows;
+    return { allCompanies: companiesRes.rows };
+  }
+
+  /** Find all companies matching a set of filters.
+   *
+   * Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
+   * */
+
+  static async findSome(filters) {
+    let numFilter = '';
+    if (filters.minEmployees && filters.maxEmployees) {
+      numFilter = `num_employees BETWEEN ${filters.minEmployees} and ${filters.maxEmployees}`;
+    } else if (filters.minEmployees) {
+      numFilter = `num_employees >= ${filters.minEmployees}`;
+    } else if(filters.maxEmployees) {
+      numFilter = `num_employees <= ${filters.maxEmployees}`;
+    }
+    let nameFilter = '';
+    if (filters.nameLike) {
+      nameFilter = `name LIKE %${filters.nameLike}%`
+    }
+    
+    let setWhere;
+    if (numFilter && nameFilter) {
+      setWhere = `${numFilter} AND ${nameFilter}`;
+    } else if (numFilter) {
+      setWhere = numFilter;
+    } else if (nameFilter) {
+      setWhere = nameFilter;
+    }
+
+    const querySql = `SELECT handle,
+                             name,
+                             description,
+                             num_employees AS "numEmployees",
+                             logo_url AS "logoUrl"
+                      FROM companies
+                      WHERE ${setWhere} 
+                      ORDER BY name`;
+    const companiesRes = await db.query(querySql);
+    return { filteredCompanies: companiesRes.rows };
   }
 
   /** Given a company handle, return data about company.
