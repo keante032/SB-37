@@ -1,13 +1,11 @@
 const { BadRequestError } = require("../expressError");
 
-/** Receives two objects.
- *  dataToUpdate could have the properties of the user or company classes
- *  jsToSql would have just those properties whose names are different in JS vs SQL
- *  (probably camelCase vs low_dash)
- *  Returns an object with the SQL column names that need to be updated,
- *  and the values to update there.
+/**
+ * Handles creating the variable portion of a SQL UPDATE query, whatever the columns involved may be.
+ * @param   {Object}  dataToUpdate  The keys should match properties of either the user or company models, depending on what we're updating.
+ * @param   {Object}  jsToSql       For any cases where JS property name doesn't match SQL column name, keys are JS version (camelCase), values are SQL version (low_dash).
+ * @returns {Object}                .setCols is one string for all the column names, ready to be inserted in SQL query, and .values is an array of the values to be set in the database.
  */
-
 function sqlForPartialUpdate(dataToUpdate, jsToSql={}) {
   const keys = Object.keys(dataToUpdate);
   if (keys.length === 0) throw new BadRequestError("No data");
