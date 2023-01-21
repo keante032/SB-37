@@ -53,15 +53,19 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
 
 router.get("/", async function (req, res, next) {
   try {
-    // check that, if provided, min and max are integers >=0 and nameLike is string
-    const validator = jsonschema.validate(req.query, companySearchSchema);
+    // get filters from query string; they could have values or be undefined
+    let { minEmployees, maxEmployees, nameLike } = req.query;
+    // if min and/or max are defined, they are Strings and I want them as Numbers
+    if (minEmployees) minEmployees = Number(minEmployees);
+    if (maxEmployees) maxEmployees = Number(maxEmployees);
+
+    // validate against schema to confirm min/max are integers >= 0 and nameLike is a string
+    const reqQuery = { minEmployees, maxEmployees, nameLike };
+    const validator = jsonschema.validate(reqQuery, companySearchSchema);
     if (!validator.valid) {
       const errs = validator.errors.map(e => e.stack);
       throw new BadRequestError(errs);
     }
-
-    // get filters from query string; they could have values or be undefined
-    const { minEmployees, maxEmployees, nameLike } = req.query;
 
     // right off the bat, throw an error if user screws up the min and max numbers
     if (minEmployees > maxEmployees) throw new BadRequestError("Min cannot be greater than max");
@@ -69,15 +73,18 @@ router.get("/", async function (req, res, next) {
     // filters starts off as empty object that the following if statements may or may not fill in
     const filters = {};
     // check if each query param is truthy or the integer 0 and carry through the value, if so
-    // also switching min and max from Number to String now
+    // also switching min and max back from Number to String now
     if (minEmployees || minEmployees === 0) filters.minEmployees = minEmployees.toString();
     if (maxEmployees || maxEmployees === 0) filters.maxEmployees = maxEmployees.toString();
     if (nameLike) filters.nameLike = nameLike;
 
     // declare companies and then run either .findAll() or .findSome() depending on whether there are filters to use
     let companies;
-    if (Object.keys(filters).length === 0) { companies = await Company.findAll(); }
-    else { companies = await Company.findSome(filters); }
+    if (Object.keys(filters).length === 0) {
+      companies = await Company.findAll();
+    } else {
+      companies = await Company.findSome(filters);
+    }
     return res.json({ companies });
   } catch (err) {
     return next(err);

@@ -58,7 +58,7 @@ class Company {
                   logo_url AS "logoUrl"
            FROM companies
            ORDER BY name`);
-    return { allCompanies: companiesRes.rows };
+    return companiesRes.rows;
   }
 
   /** Find all companies matching a set of filters.
@@ -77,7 +77,7 @@ class Company {
     }
     let nameFilter = '';
     if (filters.nameLike) {
-      nameFilter = `name LIKE %${filters.nameLike}%`
+      nameFilter = `lower(name) LIKE '%${filters.nameLike.toLowerCase()}%'`
     }
     
     let setWhere;
@@ -98,7 +98,7 @@ class Company {
                       WHERE ${setWhere} 
                       ORDER BY name`;
     const companiesRes = await db.query(querySql);
-    return { filteredCompanies: companiesRes.rows };
+    return companiesRes.rows;
   }
 
   /** Given a company handle, return data about company.
