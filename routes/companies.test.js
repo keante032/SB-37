@@ -70,29 +70,29 @@ describe("GET /companies", function () {
     const resp = await request(app).get("/companies");
     expect(resp.body).toEqual({
       companies:
-          [
-            {
-              handle: "c1",
-              name: "C1",
-              description: "Desc1",
-              numEmployees: 1,
-              logoUrl: "http://c1.img",
-            },
-            {
-              handle: "c2",
-              name: "C2",
-              description: "Desc2",
-              numEmployees: 2,
-              logoUrl: "http://c2.img",
-            },
-            {
-              handle: "c3",
-              name: "C3",
-              description: "Desc3",
-              numEmployees: 3,
-              logoUrl: "http://c3.img",
-            },
-          ],
+        [
+          {
+            handle: "c1",
+            name: "C1",
+            description: "Desc1",
+            numEmployees: 1,
+            logoUrl: "http://c1.img",
+          },
+          {
+            handle: "c2",
+            name: "C2",
+            description: "Desc2",
+            numEmployees: 2,
+            logoUrl: "http://c2.img",
+          },
+          {
+            handle: "c3",
+            name: "C3",
+            description: "Desc3",
+            numEmployees: 3,
+            logoUrl: "http://c3.img",
+          }
+        ]
     });
   });
 
@@ -105,6 +105,45 @@ describe("GET /companies", function () {
         .get("/companies")
         .set("authorization", `Bearer ${u1Token}`);
     expect(resp.statusCode).toEqual(500);
+  });
+
+  test("our 3 filters work", async function () {
+    const resp = await request(app).get("/companies?minEmployees=2&maxEmployees=10&nameLike=c");
+    expect(resp.statusCode).toBe(200);
+    expect(resp.body).toEqual({
+      companies:
+        [
+          {
+            handle: "c2",
+            name: "C2",
+            description: "Desc2",
+            numEmployees: 2,
+            logoUrl: "http://c2.img",
+          },
+          {
+            handle: "c3",
+            name: "C3",
+            description: "Desc3",
+            numEmployees: 3,
+            logoUrl: "http://c3.img",
+          }
+        ]
+    });
+  });
+
+  test("doesn't work with any other filter", async function () {
+    const resp = await request(app).get("/companies?minEmployees=2&someOther=c");
+    expect(resp.statusCode).toBe(400);
+  });
+
+  test("doesn't work if min and max aren't numbers", async function () {
+    const resp = await request(app).get("/companies?minEmployees=A&maxEmployees=B");
+    expect(resp.statusCode).toBe(400);
+  });
+
+  test("doesn't work if min is greater than max", async function () {
+    const resp = await request(app).get("/companies?minEmployees=1000&maxEmployees=10");
+    expect(resp.statusCode).toBe(400);
   });
 });
 
