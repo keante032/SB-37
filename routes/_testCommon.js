@@ -60,6 +60,14 @@ async function commonBeforeAll() {
     password: "password3",
     isAdmin: false,
   });
+  await User.register({
+    username: "a1",
+    firstName: "A1F",
+    lastName: "A1L",
+    email: "admin1@admin.com",
+    password: "password4",
+    isAdmin: true
+  });
 }
 
 async function commonBeforeEach() {

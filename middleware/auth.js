@@ -59,8 +59,27 @@ function ensureAdmin(req, res, next) {
   }
 }
 
+/** Middleware to use when the user must either be an admin or match the user being operated on.
+ * 
+ * If not, raises Unauthorized.
+ */
+
+function ensureAdminOrSelf(req, res, next) {
+  try {
+    if (!res.locals.user) throw new UnauthorizedError();
+    if (res.locals.user.username != req.params.username) {
+      if (!res.locals.user.isAdmin) throw new UnauthorizedError();
+    }
+    
+    return next();
+  } catch (err) {
+    return next(err);
+  }
+}
+
 module.exports = {
   authenticateJWT,
   ensureLoggedIn,
-  ensureAdmin
+  ensureAdmin,
+  ensureAdminOrSelf
 };
