@@ -67,7 +67,7 @@ class Company {
    * */
 
   static async findSome(filters) {
-    let numFilter = '';
+    let numFilter;
     if (filters.minEmployees && filters.maxEmployees) {
       numFilter = `num_employees BETWEEN ${filters.minEmployees} and ${filters.maxEmployees}`;
     } else if (filters.minEmployees) {
@@ -75,9 +75,9 @@ class Company {
     } else if(filters.maxEmployees) {
       numFilter = `num_employees <= ${filters.maxEmployees}`;
     }
-    let nameFilter = '';
+    let nameFilter;
     if (filters.nameLike) {
-      nameFilter = `lower(name) LIKE '%${filters.nameLike.toLowerCase()}%'`
+      nameFilter = `name ILIKE '%${filters.nameLike}%'`
     }
     
     let setWhere;
@@ -123,6 +123,14 @@ class Company {
     const company = companyRes.rows[0];
 
     if (!company) throw new NotFoundError(`No company: ${handle}`);
+
+    const jobsRes = await db.query(
+      `SELECT id, title, salary, equity
+       FROM jobs
+       WHERE company_handle = $1
+       ORDER BY id`, [handle]);
+    
+    company.jobs = jobsRes.rows;
 
     return company;
   }

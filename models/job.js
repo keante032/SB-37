@@ -39,13 +39,13 @@ class Job {
 
     static async findAll() {
         const jobsRes = await db.query(
-          `SELECT id,
-                  title,
-                  salary,
-                  equity,
-                  company_handle AS "companyHandle"
-           FROM jobs
-           ORDER BY company_handle, title, id`);
+            `SELECT id,
+                    title,
+                    salary,
+                    equity,
+                    company_handle AS "companyHandle"
+            FROM jobs
+            ORDER BY company_handle, title, id`);
         return jobsRes.rows;
     }
 
@@ -54,7 +54,32 @@ class Job {
      * Returns [{ id, title, salary, equity, companyHandle }, ...]
      */
 
-    // static async findSome() {}
+    static async findSome(filters) {
+        let whereExpressions = [];
+        let queryValues = [];
+        if (filters.title) {
+            queryValues.push(`%${filters.title}%`);
+            whereExpressions.push(`title ILIKE $${queryValues.length}`);
+        }
+        if (filters.minSalary) {
+            queryValues.push(filters.minSalary);
+            whereExpressions.push(`salary >= $${queryValues.length}`);
+        }
+        if (filters.hasEquity) {
+            whereExpressions.push(`equity > 0`);
+        }
+
+        const jobsRes = await db.query(
+            `SELECT id,
+                    title,
+                    salary,
+                    equity,
+                    company_handle AS "companyHandle"
+            FROM jobs
+            WHERE ${whereExpressions.join(" AND ")}
+            ORDER BY company_handle, title, id`, queryValues);
+        return jobsRes.rows;
+    }
 
     /** Given a job id, return data about job.
      * 

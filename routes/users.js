@@ -5,7 +5,7 @@
 const jsonschema = require("jsonschema");
 
 const express = require("express");
-const { ensureAdmin, ensureLoggedIn, ensureAdminOrSelf } = require("../middleware/auth");
+const { ensureAdmin, ensureAdminOrSelf } = require("../middleware/auth");
 const { BadRequestError } = require("../expressError");
 const User = require("../models/user");
 const { createToken } = require("../helpers/tokens");
@@ -113,6 +113,23 @@ router.delete("/:username", ensureAdminOrSelf, async function (req, res, next) {
   try {
     await User.remove(req.params.username);
     return res.json({ deleted: req.params.username });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/** POST /[username]/jobs/[id]  { state } => { application }
+ * 
+ * Returns {"applied": jobId}
+ * 
+ * Authorization required: admin or login as user in question
+ */
+
+router.post("/:username/jobs/:id", ensureAdminOrSelf, async function (req, res, next) {
+  try {
+    const jobId = Number(req.params.id);
+    await User.applyToJob(req.params.username, jobId);
+    return res.json({ applied: jobId });
   } catch (err) {
     return next(err);
   }
